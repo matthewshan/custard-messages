@@ -1,4 +1,4 @@
-import json
+import json, random, re
 import tensorflow as tf
 from tensorflow import keras 
 
@@ -24,16 +24,43 @@ for channels in data["data"].keys():
         # {'u': 0, 't': 1579732817225, 'm': 'Nahh coke is good, esp Mexican coke', 'te': 1579732849600}
 
 # Message Data is in the format of [String: msg, int: user]
-print(message_data)
-# Users
-print(names)
 
-all_text = ''
-for data in message_data:
-    all_text += data[0] + ' '
+random.shuffle(message_data)
+training_data = message_data[0:int(len(message_data)*.8)]
+test_data = message_data[int(len(message_data)*.8):-1]
 
-words = keras.preprocessing.text.text_to_word_sequence(all_text) # https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/text_to_word_sequence
-words_matrix = keras.preprocessing.text.Tokenizer(words)
+word_freq = {}
+
+# Create word index
+word_set = {training_data[0][0]}
+for msg, user in training_data:
+    msg_words = msg.split(" ") 
+    msg_words = map(lambda word: re.sub(r'\W+', '', word), msg_words)
+    print(msg_words)
+    for word in msg_words:
+        word_set.add(word) 
+
+# TODO: sory works by frequency
+    
+word_index = {}
+word_index_reverse = {} 
+i = 0
+for word in word_set:
+    word_index[word] = i
+    word_index_reverse[i] = word
+    i += 1
+
+print(word_index)
+
+model = keras.Sequential([
+
+])
+
+# all_text = ''
+# for data in message_data:
+#     all_text += data[0] + ' '
+
+# words_matrix = keras.preprocessing.text.Tokenizer(50000)
 # Tokenizor: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer
-print("hi")
+# https://towardsdatascience.com/text-classification-in-keras-part-2-how-to-use-the-keras-tokenizer-word-representations-fd571674df23
 
