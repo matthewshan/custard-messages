@@ -52,8 +52,6 @@ for msg, user in training_data:
             word_freq[word] = 1
 
 word_freq = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
-
-# TODO: sort words by frequency
     
 word_index = {}
 word_index_reverse = {} 
