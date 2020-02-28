@@ -1,7 +1,14 @@
 import json, random, re
 import tensorflow as tf
 from tensorflow import keras 
+from nltk.stem import PorterStemmer
 
+ps = PorterStemmer()
+
+def filter_word(word):
+    return ps.stem(re.sub(r'\W+', '', word).lower())
+
+INDEX_SIZE = 10000
 
 with open("custard.json", "r", encoding="utf-8") as file:
     data = json.load(file)
@@ -26,41 +33,48 @@ for channels in data["data"].keys():
 # Message Data is in the format of [String: msg, int: user]
 
 random.shuffle(message_data)
+
+#TODO: Split the data and the label
 training_data = message_data[0:int(len(message_data)*.8)]
 test_data = message_data[int(len(message_data)*.8):-1]
 
-word_freq = {}
+
 
 # Create word index
-word_set = {training_data[0][0]}
+word_freq = {}
 for msg, user in training_data:
     msg_words = msg.split(" ") 
-    msg_words = map(lambda word: re.sub(r'\W+', '', word), msg_words)
-    print(msg_words)
+    msg_words = map(filter_word, msg_words)
     for word in msg_words:
-        word_set.add(word) 
+        if word in word_freq:
+            word_freq[word] += 1
+        else:
+            word_freq[word] = 1
 
-# TODO: sory works by frequency
+word_freq = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+
+# TODO: sort words by frequency
     
 word_index = {}
 word_index_reverse = {} 
 i = 0
-for word in word_set:
+for word, freq in word_freq:
     word_index[word] = i
     word_index_reverse[i] = word
     i += 1
+    if(i >= INDEX_SIZE):
+        break
 
 print(word_index)
 
 model = keras.Sequential([
-
+    #https://keras.io/layers/embeddings/
+    keras.layers.Embedding(len(word_index), 48),
+    keras.layers.GlobalAveragePooling1D(),
+    keras.layers.Dense(48, activation="relu"),
+    keras.layers.Dense(1, activation="sigmoid")
 ])
 
-# all_text = ''
-# for data in message_data:
-#     all_text += data[0] + ' '
+model.summary()
 
-# words_matrix = keras.preprocessing.text.Tokenizer(50000)
-# Tokenizor: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer
-# https://towardsdatascience.com/text-classification-in-keras-part-2-how-to-use-the-keras-tokenizer-word-representations-fd571674df23
-
+model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
